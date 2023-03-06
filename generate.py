@@ -161,10 +161,15 @@ def intervals(
     include_upcoming_races=True,
 ):
     s = "## 🏃‍♂️ Running Stats and Goals (via [intervals.icu](https://intervals.icu))\n\n"
+
     if include_this_week:
         target_kms = get_target_kms()
         actual_kms = get_actual_kms()
-        s += f"- This week: {actual_kms}/{target_kms}km\n"
+
+        if target_kms:
+            s += f"- This week: {actual_kms}/{target_kms}km\n"
+        else:
+            s += f"- This week: {actual_kms}km"
 
     if include_recent_run:
         most_recent = get_most_recent_run()
@@ -200,10 +205,10 @@ def intervals(
     return s
 
 
-start_wrapper = "<!-- block intervals-now -->"
-end_wrapper = "<!-- end intervals-now -->"
-
 if __name__ == "__main__":
+    start_wrapper = "<!-- block intervals-now -->"
+    end_wrapper = "<!-- end intervals-now -->"
+
     intervals_content = intervals(
         include_this_week=True,
         include_recent_run=True,
