@@ -184,7 +184,7 @@ def intervals(
         s += "- Year to Date:\n"
         s += f"  - {num_runs} runs\n"
         s += f"  - {distance}km\n"
-        s += f"  - {format_mins_seconds(duration)} of running\n"
+        s += f"  - {format_mins_seconds(duration).replace(':', 'h')}m of running\n"
         s += f"  - {elevation} meters of climbing\n"
 
     if include_upcoming_races:
