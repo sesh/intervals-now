@@ -84,7 +84,7 @@ jobs:
 
       - name: Run bandit scan
         run: |
-          bandit -c pyproject.toml -r .
+          bandit -r .
 
   update-page:
     needs: [black, ruff, bandit, isort]
