@@ -205,6 +205,26 @@ def intervals(
     return s
 
 
+def md_clean_dupe_blank_lines(md):
+    prev = None
+    lines = []
+
+    for line in md.splitlines():
+        if not (prev == "" and line == ""):
+            lines.append(line)
+
+        prev = line
+
+    return "\n".join(lines)
+
+
+def md_clean_endswith_new_line(md):
+    if not md.endswith("\n"):
+        return md + "\n"
+
+    return md
+
+
 if __name__ == "__main__":
     start_wrapper = "<!-- block intervals-now -->"
     end_wrapper = "<!-- end intervals-now -->"
@@ -217,14 +237,20 @@ if __name__ == "__main__":
     )
 
     now_page = omglol.get_now_page(omg_lol_username)
-    content = now_page["content"]
+    original_content = now_page["content"]
 
-    if start_wrapper in content and end_wrapper in content:
-        before, _ = content.split(start_wrapper, 1)
-        _, after = content.split(end_wrapper, 1)
+    if start_wrapper in original_content and end_wrapper in original_content:
+        before, _ = original_content.split(start_wrapper, 1)
+        _, after = original_content.split(end_wrapper, 1)
 
-        content = f"{before}\n\n{start_wrapper}\n{intervals_content}\n{end_wrapper}\n\n{after}"
+        content = f"{before}{start_wrapper}\n{intervals_content}{end_wrapper}\n{after}"
     else:
-        content = f"{content}\n\n{start_wrapper}\n{intervals_content}\n{end_wrapper}"
+        content = f"{original_content}{start_wrapper}\n{intervals_content}{end_wrapper}"
 
-    omglol.update_now_page(omg_lol_username, content, omg_lol_key)
+    content = md_clean_dupe_blank_lines(content)
+    content = md_clean_endswith_new_line(content)
+
+    if content != original_content:
+        omglol.update_now_page(omg_lol_username, content, omg_lol_key)
+    else:
+        print("Content is the same, skipping update...")
