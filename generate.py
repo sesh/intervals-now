@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from datetime import datetime, timedelta
@@ -69,7 +70,7 @@ def get_actual_kms(week_offset=0):
     return int(sum(current_week_volume) / 1000)
 
 
-def get_target_kms(week_offset=0):
+def get_planned_week(week_offset=0):
     today = datetime.now() + timedelta(weeks=week_offset)
     target_week = today.isocalendar().week
 
@@ -78,13 +79,13 @@ def get_target_kms(week_offset=0):
     response = request(
         url,
         params={
-            "oldest": (today - timedelta(days=20)).isoformat().split("T")[0],
+            "oldest": (today - timedelta(days=7)).isoformat().split("T")[0],
             "newest": (today + timedelta(days=120)).isoformat().split("T")[0],
         },
         basic_auth=("API_KEY", intervals_api_key),
     )
 
-    current_week_planned = []
+    current_week_planned = {x: [] for x in range(7)}
 
     for event in response.json:
         start_date = datetime.fromisoformat(event["start_date_local"])
@@ -93,10 +94,17 @@ def get_target_kms(week_offset=0):
         if event_week != target_week:
             continue
 
+        day_of_week = start_date.weekday()
         if event.get("type", "") == "Run" and event.get("distance"):
-            current_week_planned.append(event["distance"])
+            current_week_planned[day_of_week].append(event["distance"])
 
-    return int(sum(current_week_planned) / 1000)
+    return current_week_planned
+
+
+def get_target_kms(week_offset=0):
+    current_week_planned = get_planned_week(week_offset)
+    target_meters = sum([sum(v) for v in current_week_planned.values()])
+    return int(target_meters / 1000)
 
 
 def get_upcoming_races():
@@ -143,7 +151,7 @@ def get_yearly_stats():
             if event.get("type", "") == "Run" and event.get("distance"):
                 ytd_kms.append(event["distance"])
                 ytd_mins.append(event["moving_time"] / 60)
-                ytd_elevation.append(event.get("total_elevation_gain", 0))
+                ytd_elevation.append(event.get("total_elevation_gain", 0) or 0)
 
     return (
         len(ytd_kms),
@@ -170,6 +178,8 @@ def intervals(
             s += f"- This week: {actual_kms}/{target_kms}km\n"
         else:
             s += f"- This week: {actual_kms}km"
+
+        print(s)
 
     if include_recent_run:
         most_recent = get_most_recent_run()
